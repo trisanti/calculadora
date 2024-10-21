@@ -47,28 +47,34 @@ fun CalculatorApp() {
 
         Column {
             Row(Modifier.fillMaxWidth()) {
-                ButtonComponent(label = "7") { displayValue += "7" }
-                ButtonComponent(label = "8") { displayValue += "8" }
-                ButtonComponent(label = "9") { displayValue += "9" }
-                ButtonComponent(label = "/") { displayValue += "/" }
+                ButtonComponent(label = "7") { displayValue = appendValue(displayValue, "7") }
+                ButtonComponent(label = "8") { displayValue = appendValue(displayValue, "8") }
+                ButtonComponent(label = "9") { displayValue = appendValue(displayValue, "9") }
+                ButtonComponent(label = "/") { displayValue = appendValue(displayValue, "/") }
             }
             Row(Modifier.fillMaxWidth()) {
-                ButtonComponent(label = "4") { displayValue += "4" }
-                ButtonComponent(label = "5") { displayValue += "5" }
-                ButtonComponent(label = "6") { displayValue += "6" }
-                ButtonComponent(label = "") { displayValue += "" }
+                ButtonComponent(label = "4") { displayValue = appendValue(displayValue, "4") }
+                ButtonComponent(label = "5") { displayValue = appendValue(displayValue, "5") }
+                ButtonComponent(label = "6") { displayValue = appendValue(displayValue, "6") }
+                ButtonComponent(label = "*") { displayValue = appendValue(displayValue, "*") }
             }
             Row(Modifier.fillMaxWidth()) {
-                ButtonComponent(label = "1") { displayValue += "1" }
-                ButtonComponent(label = "2") { displayValue += "2" }
-                ButtonComponent(label = "3") { displayValue += "3" }
-                ButtonComponent(label = "-") { displayValue += "-" }
+                ButtonComponent(label = "1") { displayValue = appendValue(displayValue, "1") }
+                ButtonComponent(label = "2") { displayValue = appendValue(displayValue, "2") }
+                ButtonComponent(label = "3") { displayValue = appendValue(displayValue, "3") }
+                ButtonComponent(label = "-") { displayValue = appendValue(displayValue, "-") }
             }
             Row(Modifier.fillMaxWidth()) {
                 ButtonComponent(label = "C") { displayValue = "0" }
-                ButtonComponent(label = "0") { displayValue += "0" }
-                ButtonComponent(label = "=") {  }
-                ButtonComponent(label = "+") { displayValue += "+" }
+                ButtonComponent(label = "0") { displayValue = appendValue(displayValue, "0") }
+                ButtonComponent(label = "=") {
+                    try {
+                        displayValue = evaluateExpression(displayValue)
+                    } catch (e: Exception) {
+                        displayValue = "Error"
+                    }
+                }
+                ButtonComponent(label = "+") { displayValue = appendValue(displayValue, "+") }
             }
         }
     }
@@ -96,4 +102,62 @@ fun ButtonComponent(label: String, onClick: () -> Unit) {
     ) {
         Text(text = label)
     }
+}
+
+fun appendValue(currentValue: String, newValue: String): String {
+    return if (currentValue == "0") newValue else currentValue + newValue
+}
+
+
+fun evaluateExpression(expression: String): String {
+    val operators = mutableListOf<Char>()
+    val numbers = mutableListOf<Double>()
+
+    var currentNumber = StringBuilder()
+
+    for (char in expression) {
+        if (char.isDigit() || char == '.') {
+            currentNumber.append(char)
+        } else if (char == '+' || char == '-' || char == '*' || char == '/') {
+            numbers.add(currentNumber.toString().toDouble())
+            operators.add(char)
+            currentNumber = StringBuilder() // Reset para el siguiente número
+        }
+    }
+
+
+    if (currentNumber.isNotEmpty()) {
+        numbers.add(currentNumber.toString().toDouble())
+    }
+
+
+    var index = 0
+    while (index < operators.size) {
+        if (operators[index] == '*' || operators[index] == '/') {
+            val result = if (operators[index] == '*') {
+                numbers[index] * numbers[index + 1]
+            } else {
+                numbers[index] / numbers[index + 1]
+            }
+            numbers[index] = result
+            numbers.removeAt(index + 1)
+            operators.removeAt(index)
+        } else {
+            index++
+        }
+    }
+
+    index = 0
+    while (index < operators.size) {
+        val result = if (operators[index] == '+') {
+            numbers[index] + numbers[index + 1]
+        } else {
+            numbers[index] - numbers[index + 1]
+        }
+        numbers[index] = result
+        numbers.removeAt(index + 1)
+        operators.removeAt(index)
+    }
+
+    return numbers[0].toString()
 }
